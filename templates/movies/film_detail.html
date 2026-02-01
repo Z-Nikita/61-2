@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<a href="/movies/" class="btn btn-link p-0 mb-3">&larr; Назад к списку</a>
+
+<div class="card">
+    <div class="card-body">
+        <h1 class="h3">{{ film.title }}</h1>
+
+        <p class="mb-1"><strong>Год:</strong> {{ film.year }}</p>
+
+        {% if film.category %}
+        <p class="mb-1"><strong>Категория:</strong> {{ film.category.name }}</p>
+        {% endif %}
+
+        {% if film.genre %}
+        <p class="mb-3"><strong>Жанр:</strong> {{ film.genre }}</p>
+        {% endif %}
+
+        {% if film.description %}
+        <p class="mb-0">{{ film.description }}</p>
+        {% else %}
+        <p class="text-muted mb-0">Описание пока не добавлено.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if similar_films %}
+<hr class="my-4">
+<h2 class="h5">Похожие фильмы (та же категория)</h2>
+<ul>
+    {% for f in similar_films %}
+        <li><a href="/movies/{{ f.id }}/">{{ f.title }}</a> ({{ f.year }})</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

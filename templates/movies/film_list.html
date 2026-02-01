@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-3">Список фильмов</h1>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-auto">
+        <select class="form-select" name="category">
+            <option value="">Все категории</option>
+            {% for c in categories %}
+                <option value="{{ c.id }}" {% if selected_category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Фильтровать</button>
+        <a href="/movies/" class="btn btn-outline-secondary">Сброс</a>
+    </div>
+</form>
+
+<p class="text-muted">Всего фильмов: {{ total_films }}</p>
+
+{% if films %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    {% for film in films %}
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ film.title }}</h5>
+                <p class="card-text mb-1">
+                    <strong>Год:</strong> {{ film.year }}
+                </p>
+                {% if film.category %}
+                <p class="card-text mb-1">
+                    <strong>Категория:</strong> {{ film.category.name }}
+                </p>
+                {% endif %}
+                {% if film.genre %}
+                <p class="card-text mb-1">
+                    <strong>Жанр:</strong> {{ film.genre }}
+                </p>
+                {% endif %}
+                {% if film.description %}
+                <p class="card-text">{{ film.description|truncatechars:120 }}</p>
+                {% endif %}
+                <a href="/movies/{{ film.id }}/" class="btn btn-primary">Подробнее</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>Фильмов пока нет. Добавьте их через админку: <code>/admin/</code></p>
+{% endif %}
+
+{% if latest_films %}
+<hr class="my-4">
+<h2 class="h5">Последние добавленные</h2>
+<ul>
+    {% for f in latest_films %}
+        <li>{{ f.title }} ({{ f.year }})</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

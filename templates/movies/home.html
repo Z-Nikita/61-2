@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-4 p-md-5 mb-4 rounded text-body-emphasis bg-body-tertiary">
+    <div class="col-lg-8 px-0">
+        <h1 class="display-6">MovieSpace</h1>
+        <p class="lead my-3">Небольшой сайт на Django для просмотра списка фильмов и их детальных страниц.</p>
+        <p class="lead mb-0">
+            <a href="/movies/" class="btn btn-primary">Перейти к списку фильмов</a>
+        </p>
+    </div>
+</div>
+
+{% if categories %}
+<h2 class="h5">Категории</h2>
+<ul>
+    {% for c in categories %}
+        <li><a href="/movies/?category={{ c.id }}">{{ c.name }}</a> ({{ c.film_count }})</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted">Категорий пока нет. Добавьте их в админке.</p>
+{% endif %}
+{% endblock %}
