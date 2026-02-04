@@ -4,6 +4,9 @@
 <a href="/movies/" class="btn btn-link p-0 mb-3">&larr; Назад к списку</a>
 
 <div class="card">
+    {% if film.image %}
+    <img src="{{ film.image.url }}" class="card-img-top" alt="{{ film.title }}">
+    {% endif %}
     <div class="card-body">
         <h1 class="h3">{{ film.title }}</h1>
 
@@ -13,9 +16,14 @@
         <p class="mb-1"><strong>Категория:</strong> {{ film.category.name }}</p>
         {% endif %}
 
-        {% if film.genre %}
-        <p class="mb-3"><strong>Жанр:</strong> {{ film.genre }}</p>
-        {% endif %}
+        <div class="mb-3">
+            <strong>Жанры:</strong>
+            {% for g in film.genre.all %}
+                <span class="badge text-bg-secondary">{{ g.name }}</span>
+            {% empty %}
+                <span class="text-muted">не указаны</span>
+            {% endfor %}
+        </div>
 
         {% if film.description %}
         <p class="mb-0">{{ film.description }}</p>

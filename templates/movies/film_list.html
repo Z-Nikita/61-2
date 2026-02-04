@@ -3,8 +3,13 @@
 {% block content %}
 <h1 class="mb-3">Список фильмов</h1>
 
-<form method="get" class="row g-2 mb-4">
-    <div class="col-auto">
+<form method="get" class="row g-2 mb-4 align-items-end">
+    <div class="col-12 col-md-4 col-lg-3">
+        <label class="form-label">Поиск по названию</label>
+        <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Например: Avatar">
+    </div>
+    <div class="col-12 col-md-4 col-lg-3">
+        <label class="form-label">Категория</label>
         <select class="form-select" name="category">
             <option value="">Все категории</option>
             {% for c in categories %}
@@ -12,9 +17,19 @@
             {% endfor %}
         </select>
     </div>
-    <div class="col-auto">
+    <div class="col-12 col-md-4 col-lg-3">
+        <label class="form-label">Жанр (M2M)</label>
+        <select class="form-select" name="genre">
+            <option value="">Все жанры</option>
+            {% for g in genres %}
+                <option value="{{ g.id }}" {% if selected_genre_id == g.id %}selected{% endif %}>{{ g.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-12 col-lg-3">
         <button type="submit" class="btn btn-primary">Фильтровать</button>
         <a href="/movies/" class="btn btn-outline-secondary">Сброс</a>
+        <a href="/movies/create/" class="btn btn-success">+ Добавить</a>
     </div>
 </form>
 
@@ -25,6 +40,9 @@
     {% for film in films %}
     <div class="col">
         <div class="card h-100">
+            {% if film.image %}
+            <img src="{{ film.image.url }}" class="card-img-top" alt="{{ film.title }}">
+            {% endif %}
             <div class="card-body">
                 <h5 class="card-title">{{ film.title }}</h5>
                 <p class="card-text mb-1">
@@ -35,11 +53,14 @@
                     <strong>Категория:</strong> {{ film.category.name }}
                 </p>
                 {% endif %}
-                {% if film.genre %}
-                <p class="card-text mb-1">
-                    <strong>Жанр:</strong> {{ film.genre }}
-                </p>
-                {% endif %}
+                <div class="mb-2">
+                    <strong>Жанры:</strong>
+                    {% for g in film.genre.all %}
+                        <span class="badge text-bg-secondary">{{ g.name }}</span>
+                    {% empty %}
+                        <span class="text-muted">не указаны</span>
+                    {% endfor %}
+                </div>
                 {% if film.description %}
                 <p class="card-text">{{ film.description|truncatechars:120 }}</p>
                 {% endif %}
