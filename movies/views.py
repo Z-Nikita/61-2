@@ -1,6 +1,8 @@
 from django.db.models import Count
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .forms import CreateFilmForm
 from .models import Category, Film, Genre
 
 
@@ -18,6 +20,7 @@ def home(request):
     )
 
 
+@login_required(login_url="/login/")
 def film_list(request):
     # ORM: select_related + prefetch_related + order_by + filter
     films_qs = (
@@ -74,6 +77,7 @@ def film_list(request):
     )
 
 
+@login_required(login_url="/login/")
 def film_detail(request, film_id: int):
     # ORM: get / 404
     film = get_object_or_404(
@@ -103,79 +107,29 @@ def film_detail(request, film_id: int):
     )
 
 
+@login_required(login_url="/login/")
 def film_create(request):
-    """Создание фильма через внешний интерфейс (GET/POST + CSRF)."""
+    """Создание фильма через внешний интерфейс (GET/POST + CSRF + Form Validation)."""
 
     if request.method == "GET":
-        categories = Category.objects.order_by("name")
-        genres = Genre.objects.order_by("name")
-        return render(
-            request,
-            "movies/film_create.html",
-            context={"categories": categories, "genres": genres},
-        )
+        form = CreateFilmForm()
+        return render(request, "movies/film_create.html", context={"form": form})
 
     # POST
-    title = (request.POST.get("title") or "").strip()
-    year_raw = (request.POST.get("year") or "").strip()
-    description = (request.POST.get("description") or "").strip()
-    category_id_raw = request.POST.get("category") or request.POST.get("category_id")
-    genre_ids = request.POST.getlist("genre") or request.POST.getlist("genre_id")
-    image = request.FILES.get("image")
-
-    errors = []
-    year = None
-    if not title:
-        errors.append("Введите название фильма.")
-    try:
-        year = int(year_raw)
-    except (TypeError, ValueError):
-        errors.append("Введите корректный год (число).")
-
-    category_obj = None
-    if category_id_raw:
-        try:
-            category_obj = Category.objects.get(id=int(category_id_raw))
-        except (ValueError, Category.DoesNotExist):
-            category_obj = None
-
-    if errors:
-        categories = Category.objects.order_by("name")
-        genres = Genre.objects.order_by("name")
-        return render(
-            request,
-            "movies/film_create.html",
-            context={
-                "categories": categories,
-                "genres": genres,
-                "errors": errors,
-                "form_data": {
-                    "title": title,
-                    "year": year_raw,
-                    "description": description,
-                    "category_id": category_id_raw or "",
-                    "genre_ids": set(genre_ids),
-                },
-            },
-        )
+    form = CreateFilmForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return render(request, "movies/film_create.html", context={"form": form})
 
     film = Film.objects.create(
-        title=title,
-        year=year,
-        category=category_obj,
-        description=description,
-        image=image,
+        title=form.cleaned_data.get("title"),
+        year=form.cleaned_data.get("year"),
+        description=form.cleaned_data.get("description") or "",
+        image=form.cleaned_data.get("image"),
+        category=form.cleaned_data.get("category"),
     )
 
-    # Привязываем жанры (ManyToMany)
-    if genre_ids:
-        valid_ids = []
-        for g in genre_ids:
-            try:
-                valid_ids.append(int(g))
-            except ValueError:
-                continue
-        if valid_ids:
-            film.genre.set(Genre.objects.filter(id__in=valid_ids))
+    genres = form.cleaned_data.get("genre")
+    if genres:
+        film.genre.set(genres)
 
     return redirect(f"/movies/{film.id}/")

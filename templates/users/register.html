@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1 class="mb-3">Регистрация</h1>
+
+<form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ forms.as_p }}
+    <button type="submit" class="btn btn-success">Зарегистрироваться</button>
+</form>
+
+{% endblock %}

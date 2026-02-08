@@ -4,10 +4,14 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 from movies.views import home
+from users.views import login_user, logout_user, register
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home, name="home"),
+    path("register/", register, name="register"),
+    path("login/", login_user, name="login"),
+    path("logout/", logout_user, name="logout"),
     path("movies/", include("movies.urls")),
 ]
 
