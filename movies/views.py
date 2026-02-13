@@ -1,63 +1,90 @@
-from django.db.models import Count
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import CreateFilmForm
-from .models import Category, Film, Genre
+from .forms import CreateFilmForm, SearchFilmForm
+from .models import Category, Film
 
 
 def home(request):
-    # ORM: annotate
-    categories = (
-        Category.objects.annotate(film_count=Count("films"))
-        .order_by("name")
-    )
+    """Home page: categories with film counters."""
 
-    return render(
-        request,
-        "movies/home.html",
-        context={"categories": categories},
-    )
+    categories = Category.objects.annotate(film_count=Count("films")).order_by("name")
+    return render(request, "movies/home.html", context={"categories": categories})
 
 
 @login_required(login_url="/login/")
 def film_list(request):
-    # ORM: select_related + prefetch_related + order_by + filter
-    films_qs = (
-        Film.objects.select_related("category")
-        .prefetch_related("genre")
-        .order_by("title")
-    )
+    """Films list with search + filters.
 
-    # query params (поддержим оба варианта: category и category_id)
-    category_id_raw = request.GET.get("category") or request.GET.get("category_id")
-    genre_id_raw = request.GET.get("genre") or request.GET.get("genre_id")
-    q = (request.GET.get("q") or "").strip()
+    Required by assignment:
+    - Search (поисковик)
+    - Single-select filtering: dynamic (category) + static (year_choice)
+    - Multi-select filtering: dynamic (genres M2M) + static (decades)
+    """
 
-    selected_category_id = None
-    selected_genre_id = None
+    films_qs = Film.objects.select_related("category").prefetch_related("genre").order_by("title")
 
-    if q:
-        films_qs = films_qs.filter(title__icontains=q)
+    # Backward compatibility with older query params from previous homework versions
+    params = request.GET.copy()
+    if params.get("q") and not params.get("search"):
+        params["search"] = params.get("q")
 
-    if category_id_raw:
-        try:
-            selected_category_id = int(category_id_raw)
-            films_qs = films_qs.filter(category_id=selected_category_id)
-        except ValueError:
-            selected_category_id = None
+    if params.get("category") and not params.get("category_id"):
+        params["category_id"] = params.get("category")
 
-    if genre_id_raw:
-        try:
-            selected_genre_id = int(genre_id_raw)
-            films_qs = films_qs.filter(genre__id=selected_genre_id).distinct()
-        except ValueError:
-            selected_genre_id = None
+    # single genre -> multi genres
+    if params.get("genre") and not params.getlist("genres"):
+        params.setlist("genres", [params.get("genre")])
 
-    categories = Category.objects.order_by("name")
-    genres = Genre.objects.order_by("name")
+    if params.get("genre_id") and not params.getlist("genres"):
+        params.setlist("genres", [params.get("genre_id")])
 
-    # ORM: count + slicing
+    form = SearchFilmForm(params if params else None)
+
+    if form.is_valid():
+        search = (form.cleaned_data.get("search") or "").strip()
+        if search:
+            films_qs = films_qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
+
+        category = form.cleaned_data.get("category_id")
+        if category:
+            films_qs = films_qs.filter(category=category)
+
+        # static single-choice filter
+        year_choice = form.cleaned_data.get("year_choice")
+        if year_choice:
+            if year_choice == "1":
+                films_qs = films_qs.filter(year__gte=2015)
+            elif year_choice == "2":
+                films_qs = films_qs.filter(year__lt=2015)
+            elif year_choice == "3":
+                films_qs = films_qs.filter(year__gte=2000, year__lte=2010)
+
+        # dynamic multi-choice filter (M2M)
+        genres = form.cleaned_data.get("genres")
+        if genres:
+            films_qs = films_qs.filter(genre__in=genres).distinct()
+
+        # static multi-choice filter (decades)
+        decades = form.cleaned_data.get("decade") or []
+        if decades:
+            decade_q = Q()
+            for d in decades:
+                if d == "1970s":
+                    decade_q |= Q(year__gte=1970, year__lte=1979)
+                elif d == "1980s":
+                    decade_q |= Q(year__gte=1980, year__lte=1989)
+                elif d == "1990s":
+                    decade_q |= Q(year__gte=1990, year__lte=1999)
+                elif d == "2000s":
+                    decade_q |= Q(year__gte=2000, year__lte=2009)
+                elif d == "2010s":
+                    decade_q |= Q(year__gte=2010, year__lte=2019)
+                elif d == "2020s":
+                    decade_q |= Q(year__gte=2020, year__lte=2029)
+            films_qs = films_qs.filter(decade_q)
+
     total_films = films_qs.count()
     latest_films = Film.objects.order_by("-id")[:5]
 
@@ -66,11 +93,7 @@ def film_list(request):
         "movies/film_list.html",
         context={
             "films": films_qs,
-            "categories": categories,
-            "genres": genres,
-            "selected_category_id": selected_category_id,
-            "selected_genre_id": selected_genre_id,
-            "q": q,
+            "forms": form,
             "total_films": total_films,
             "latest_films": latest_films,
         },
@@ -79,7 +102,6 @@ def film_list(request):
 
 @login_required(login_url="/login/")
 def film_detail(request, film_id: int):
-    # ORM: get / 404
     film = get_object_or_404(
         Film.objects.select_related("category").prefetch_related("genre"),
         id=film_id,
@@ -87,7 +109,6 @@ def film_detail(request, film_id: int):
 
     categories = Category.objects.order_by("name")
 
-    # ORM: показать похожие фильмы
     similar_films = []
     if film.category_id:
         similar_films = (
@@ -109,7 +130,7 @@ def film_detail(request, film_id: int):
 
 @login_required(login_url="/login/")
 def film_create(request):
-    """Создание фильма через внешний интерфейс (GET/POST + CSRF + Form Validation)."""
+    """Create film via external interface (GET/POST + CSRF + form validation)."""
 
     if request.method == "GET":
         form = CreateFilmForm()
