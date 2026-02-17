@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="h4 mb-3">Удалить фильм</h1>
+
+<div class="alert alert-warning">
+  Вы точно хотите удалить фильм <strong>{{ film.title }}</strong>?
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Да, удалить</button>
+  <a href="/movies/{{ film.id }}/" class="btn btn-outline-secondary">Отмена</a>
+</form>
+{% endblock %}

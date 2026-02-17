@@ -18,3 +18,12 @@ class RegisterForms(forms.Form):
 class LoginForms(forms.Form):
     username = forms.CharField(required=True)
     password = forms.CharField(required=True)
+
+
+class UpdateProfileForm(forms.Form):
+    username = forms.CharField(required=True, label="Логин")
+    email = forms.EmailField(required=False, label="Email")
+    first_name = forms.CharField(required=False, label="Имя")
+    last_name = forms.CharField(required=False, label="Фамилия")
+    age = forms.IntegerField(required=True, label="Возраст")
+    image = forms.ImageField(required=False, label="Фото профиля")

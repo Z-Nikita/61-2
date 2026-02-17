@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-3">Редактировать профиль</h1>
+
+<form method="post" enctype="multipart/form-data" class="card card-body">
+  {% csrf_token %}
+
+  {% if forms.non_field_errors %}
+    <div class="alert alert-danger">
+      {{ forms.non_field_errors }}
+    </div>
+  {% endif %}
+
+  {{ forms.as_p }}
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="/profile/" class="btn btn-outline-secondary">Отмена</a>
+  </div>
+</form>
+{% endblock %}

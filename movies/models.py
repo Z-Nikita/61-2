@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import Profile
 
 
 class Category(models.Model):
@@ -22,6 +23,16 @@ class Genre(models.Model):
 class Film(models.Model):
     title = models.CharField(max_length=255)
     year = models.PositiveSmallIntegerField()
+
+    # владелец фильма (Profile OneToOne -> Film ForeignKey)
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="films",
+    )
+
 
     # изображение (фото постера)
     image = models.ImageField(null=True, blank=True, upload_to="films/")

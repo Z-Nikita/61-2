@@ -54,6 +54,19 @@
     </div>
     {% endfor %}
 </div>
+
+{% if list_pages %}
+<nav aria-label="Pagination" class="mt-4">
+  <ul class="pagination">
+    {% for p in list_pages %}
+      <li class="page-item {% if p == current_page %}active{% endif %}">
+        <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ p }}">{{ p }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+
 {% else %}
 <p>Фильмов пока нет. Добавьте их через админку: <code>/admin/</code></p>
 {% endif %}

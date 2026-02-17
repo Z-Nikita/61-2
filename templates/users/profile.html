@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-3">Профиль</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-3">
+      {% if user.profile.image %}
+        <img src="{{ user.profile.image.url }}" alt="Avatar" style="width:80px;height:80px;object-fit:cover;border-radius:50%">
+      {% else %}
+        <div style="width:80px;height:80px;border-radius:50%" class="bg-secondary"></div>
+      {% endif %}
+
+      <div>
+        <div><strong>Логин:</strong> {{ user.username }}</div>
+        {% if user.email %}<div><strong>Email:</strong> {{ user.email }}</div>{% endif %}
+        {% if user.first_name or user.last_name %}
+          <div><strong>Имя:</strong> {{ user.first_name }} {{ user.last_name }}</div>
+        {% endif %}
+        <div><strong>Возраст:</strong> {{ user.profile.age }}</div>
+      </div>
+    </div>
+
+    <a href="/profile/update/" class="btn btn-primary mt-3">Редактировать профиль</a>
+  </div>
+</div>
+
+<h2 class="h5">Мои фильмы</h2>
+
+{% if my_films %}
+  <ul class="list-group">
+    {% for film in my_films %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <a href="/movies/{{ film.id }}/">{{ film.title }}</a>
+        <span class="text-muted">{{ film.year }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-muted">Пока нет добавленных фильмов.</p>
+{% endif %}
+{% endblock %}
